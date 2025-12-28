@@ -9,22 +9,25 @@ import (
 	"syscall"
 	"time"
 
-	"ride-sharing/shared/env"
-)
-
-var (
-	httpAddr = env.GetString("HTTP_ADDR", ":8081")
+	h "ride-sharing/services/trip-service/internal/infrastructure/http"
+	"ride-sharing/services/trip-service/internal/infrastructure/repository"
+	"ride-sharing/services/trip-service/internal/service"
 )
 
 func main() {
 	log.Println("Starting API Gateway")
 
+	inmemRepo := repository.NewInmemRepository()
+
+	svc := service.NewService(inmemRepo)
+
+	httpHandler := h.NewHttpHandler(*svc)
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /trip/preview", handleTripPreview)
+	mux.HandleFunc("Post /preview", httpHandler.HandleTripPreview)
 
 	server := http.Server{
-		Addr:    httpAddr,
+		Addr:    ":8083",
 		Handler: mux,
 	}
 
