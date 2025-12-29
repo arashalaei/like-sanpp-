@@ -1,9 +1,16 @@
 package repository
 
-type InmemRepo interface{}
+import (
+	"context"
+	"ride-sharing/services/trip-service/internal/domain"
+)
 
-type inmemrepo struct{}
+type Inmemrepo struct{}
 
-func NewInmemRepository() InmemRepo {
-	return &inmemrepo{}
+func NewInmemRepository() Inmemrepo {
+	return Inmemrepo{}
+}
+
+func (r *Inmemrepo) CreateTrip(ctx context.Context, trip *domain.TripModel) (*domain.TripModel, error) {
+	return nil, nil
 }

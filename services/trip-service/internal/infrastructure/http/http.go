@@ -5,15 +5,14 @@ import (
 	"log"
 	"net/http"
 	"ride-sharing/services/trip-service/internal/domain"
-	"ride-sharing/services/trip-service/internal/service"
 	"ride-sharing/shared/types"
 )
 
 type httpHandler struct {
-	service service.Service
+	service domain.TripService
 }
 
-func NewHttpHandler(service service.Service) httpHandler {
+func NewHttpHandler(service domain.TripService) httpHandler {
 	return httpHandler{service}
 }
 
@@ -31,11 +30,7 @@ func (h *httpHandler) HandleTripPreview(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	fare := domain.RideFareModel{
-		UserID: "USR#43",
-	}
-
-	t, err := h.service.CreateTrip(r.Context(), fare)
+	t, err := h.service.GetRoute(r.Context(), &reqBody.Pickup, &reqBody.Destination)
 	if err != nil {
 		log.Panicln(err)
 	}

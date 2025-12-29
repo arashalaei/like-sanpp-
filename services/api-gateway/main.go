@@ -29,10 +29,13 @@ func main() {
 	}
 
 	servereError := make(chan error, 1)
-	servereError <- server.ListenAndServe()
+	go func() {
+		log.Panicf("Server is listening on: %s", httpAddr)
+		servereError <- server.ListenAndServe()
+	}()
 
 	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(stop, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	select {
 	case <-stop:
@@ -40,9 +43,10 @@ func main() {
 		defer cancel()
 
 		if err := server.Shutdown(ctx); err != nil {
-			log.Println("falied to shutdonw gracefully.")
+			log.Printf("falied to shutdonw gracefully: %v", err)
 			server.Close()
 		}
-	case <-servereError:
+	case err := <-servereError:
+		log.Printf("Error starting the server: %v", err)
 	}
 }
