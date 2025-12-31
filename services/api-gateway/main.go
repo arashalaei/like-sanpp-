@@ -21,28 +21,30 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /trip/preview", handleTripPreview)
-
+	mux.HandleFunc("POST /trip/preview", enableCORS(handleTripPreview))
 	// ws
 	mux.HandleFunc("/ws/drivers", handleDriversWebSocket)
 	mux.HandleFunc("/ws/riders", handleRidersWebSocket)
 
-	server := http.Server{
+	server := &http.Server{
 		Addr:    httpAddr,
 		Handler: mux,
 	}
 
-	servereError := make(chan error, 1)
+	servereErrors := make(chan error, 1)
+
 	go func() {
-		log.Panicf("Server is listening on: %s", httpAddr)
-		servereError <- server.ListenAndServe()
+		log.Panicf("Server listening on: %s", httpAddr)
+		servereErrors <- server.ListenAndServe()
 	}()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	select {
-	case <-stop:
+	case sig := <-stop:
+		log.Panicf("Server is shutting down due to %v signal", sig)
+
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
@@ -50,7 +52,7 @@ func main() {
 			log.Printf("falied to shutdonw gracefully: %v", err)
 			server.Close()
 		}
-	case err := <-servereError:
+	case err := <-servereErrors:
 		log.Printf("Error starting the server: %v", err)
 	}
 }
